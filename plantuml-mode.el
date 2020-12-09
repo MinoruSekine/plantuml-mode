@@ -6,8 +6,10 @@
 ;; Author: Zhang Weize (zwz)
 ;; Maintainer: Carlo Sciolla (skuro)
 ;; Keywords: uml plantuml ascii
+;; Package-Commit: ea45a13707abd2a70df183f1aec6447197fc9ccc
 ;; Version: 1.2.9
-;; Package-Version: 1.2.9
+;; Package-Version: 20191102.2056
+;; Package-X-Original-Version: 1.2.9
 ;; Package-Requires: ((dash "2.0.0") (emacs "25.0"))
 
 ;; This file is free software; you can redistribute it and/or modify
@@ -324,6 +326,7 @@
           (setq found (search-forward ";" nil nil)))))))
 
 (defconst plantuml-preview-buffer "*PLANTUML Preview*")
+(defconst plantuml-preview-error-buffer "*PLANTUML Preview Error*")
 
 (defvar plantuml-output-type
   (if (not (display-images-p))
@@ -383,11 +386,18 @@ Note that output type `txt' is promoted to `utxt' for better rendering."
 
 (defun plantuml-executable-start-process (buf)
   "Run PlantUML as an Emacs process and puts the output into the given buffer (as BUF)."
-  (apply #'start-process
-         "PLANTUML" buf plantuml-executable-path
-         `(,@plantuml-executable-args
-           ,(plantuml-jar-output-type-opt plantuml-output-type)
-           "-p")))
+  (make-pipe-process :name "PLANTUML"
+		:buffer buf
+		:command `(plantuml-executable-path
+			   ,@plantuml-executable-args
+			   ,(plantuml-jar-output-type-opt plantuml-output-type)
+			   "-p")
+		:stderr plantuml-preview-error-buffer))
+  ;; (apply #'start-process
+  ;;        "PLANTUML" buf plantuml-executable-path
+  ;;        `(,@plantuml-executable-args
+  ;;          ,(plantuml-jar-output-type-opt plantuml-output-type)
+  ;;          "-p")))
 
 (defun plantuml-update-preview-buffer (prefix buf)
   "Show the preview in the preview buffer BUF.
